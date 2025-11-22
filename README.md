@@ -52,6 +52,12 @@ You can pass a command to `grab-screen`. The screenshot path will be appended as
 ./grab-screen wl-copy
 ```
 
+**Example: Edit with Swappy**
+
+```bash
+./grab-screen swappy -f
+```
+
 **Example: Upload to a server (fictional script)**
 
 ```bash

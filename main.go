@@ -9,21 +9,46 @@ import (
 	"github.com/ksimuk/grab-screen/portal"
 )
 
+var version = "dev"
+
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	keepFlag := flag.Bool("k", false, "Keep the screenshot file after execution")
 	flag.BoolVar(keepFlag, "keep", false, "Keep the screenshot file after execution")
+
+	versionFlag := flag.Bool("v", false, "Print version information")
+	flag.BoolVar(versionFlag, "version", false, "Print version information")
+
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s [options] [command [args...]]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "\nOptions:\n")
+		flag.PrintDefaults()
+		fmt.Fprintf(os.Stderr, "\nIf a command is provided, the screenshot path will be appended to its arguments.\n")
+		fmt.Fprintf(os.Stderr, "\nExample:\n")
+		fmt.Fprintf(os.Stderr, "  %s swappy -f\n", os.Args[0])
+	}
+
 	flag.Parse()
+
+	if *versionFlag {
+		fmt.Printf("grab-screen version %s\n", version)
+		return nil
+	}
 
 	// Take the screenshot
 	screenshotPath, err := portal.TakeScreenshot()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error taking screenshot: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("error taking screenshot: %w", err)
 	}
 
 	if screenshotPath == "" {
-		fmt.Fprintf(os.Stderr, "Error: received empty screenshot path\n")
-		os.Exit(1)
+		return fmt.Errorf("error: received empty screenshot path")
 	}
 
 	// Ensure cleanup unless keep flag is set
@@ -48,12 +73,13 @@ func main() {
 		cmd.Stderr = os.Stderr
 
 		if err := cmd.Run(); err != nil {
-			// If the command fails, we still exit with error, but defer will handle cleanup
-			fmt.Fprintf(os.Stderr, "Command execution failed: %v\n", err)
-			os.Exit(1)
+			// If the command fails, we return the error, and defer will handle cleanup
+			return fmt.Errorf("command execution failed: %w", err)
 		}
 	} else {
 		// If no command provided, just print the path
 		fmt.Println(screenshotPath)
 	}
+
+	return nil
 }
