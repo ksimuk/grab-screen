@@ -22,7 +22,7 @@
 ```bash
 git clone https://github.com/ksimuk/grab-screen.git
 cd grab-screen
-go build .
+goreleaser build --snapshot --clean
 ```
 
 ## Usage
