@@ -63,46 +63,44 @@ func TakeScreenshot() (string, error) {
 	conn.Signal(c)
 
 	// Wait for the signal
-	select {
-	case sig := <-c:
-		if len(sig.Body) < 2 {
-			return "", fmt.Errorf("unexpected signal body length")
-		}
-
-		responseCode, ok := sig.Body[0].(uint32)
-		if !ok {
-			return "", fmt.Errorf("unexpected type for response code")
-		}
-
-		if responseCode != 0 {
-			return "", fmt.Errorf("screenshot request failed or cancelled (code: %d)", responseCode)
-		}
-
-		results, ok := sig.Body[1].(map[string]dbus.Variant)
-		if !ok {
-			return "", fmt.Errorf("unexpected type for results")
-		}
-
-		uriVariant, ok := results["uri"]
-		if !ok {
-			return "", fmt.Errorf("no uri in results")
-		}
-
-		uri, ok := uriVariant.Value().(string)
-		if !ok {
-			return "", fmt.Errorf("uri is not a string")
-		}
-
-		// The URI is usually in the format file:///path/to/file.png
-		u, err := url.Parse(uri)
-		if err != nil {
-			return "", fmt.Errorf("failed to parse uri: %w", err)
-		}
-
-		if u.Scheme != "file" {
-			return "", fmt.Errorf("unexpected scheme in uri: %s", u.Scheme)
-		}
-
-		return u.Path, nil
+	sig := <-c
+	if len(sig.Body) < 2 {
+		return "", fmt.Errorf("unexpected signal body length")
 	}
+
+	responseCode, ok := sig.Body[0].(uint32)
+	if !ok {
+		return "", fmt.Errorf("unexpected type for response code")
+	}
+
+	if responseCode != 0 {
+		return "", fmt.Errorf("screenshot request failed or cancelled (code: %d)", responseCode)
+	}
+
+	results, ok := sig.Body[1].(map[string]dbus.Variant)
+	if !ok {
+		return "", fmt.Errorf("unexpected type for results")
+	}
+
+	uriVariant, ok := results["uri"]
+	if !ok {
+		return "", fmt.Errorf("no uri in results")
+	}
+
+	uri, ok := uriVariant.Value().(string)
+	if !ok {
+		return "", fmt.Errorf("uri is not a string")
+	}
+
+	// The URI is usually in the format file:///path/to/file.png
+	u, err := url.Parse(uri)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse uri: %w", err)
+	}
+
+	if u.Scheme != "file" {
+		return "", fmt.Errorf("unexpected scheme in uri: %s", u.Scheme)
+	}
+
+	return u.Path, nil
 }
